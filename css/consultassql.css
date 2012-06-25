@@ -1,0 +1,50 @@
+@CHARSET "UTF-8";
+
+th{
+	margin: 2px;
+	padding:  5px;
+	background: #1111dd;
+	color: #ffffff;
+}
+
+td{
+	margin: 1px;
+	padding:  5px;
+	background: #ffffff;
+}
+
+td.alt {
+	background: #cdcdcd;
+}
+
+td.over {
+	background: #efefef;
+}
+
+/* Consulta SQL */
+.regs-panel{
+	border: 1px #000000 solid;
+	margin: 5px;
+	padding: 5px;
+}
+
+.tabla{
+	width: 100%;
+}
+
+td.operation{
+	width: 10%;
+}
+
+#left, #right{
+/* 	background-color: #eeeeee; */
+	min-height: 30px; 
+}
+
+#left{
+	background-color: #00FFCC;
+}
+
+#right{
+	background-color: #33FF66;
+}
