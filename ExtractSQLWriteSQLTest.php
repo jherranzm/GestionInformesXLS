@@ -6,13 +6,23 @@ error_reporting(E_ALL);
 ini_set('include_path', ini_get('include_path').':/usr/local/pear/share/pear/PHPExcel/');
 
 /** PHPExcel */
-include_once('PHPExcel.php');
+require_once('PHPExcel.php');
 
 /** PHPExcel_Writer_Excel2007 */
 //include_once('/usr/local/pear/share/pear/PHPExcel/PHPExcel/Writer/Excel2007.php');
 //include_once('/usr/local/pear/share/pear/PHPExcel/PHPExcel/Writer/Excel5.php');
-include_once('PHPExcel/Writer/Excel2007.php');
-include_once('PHPExcel/Writer/Excel5.php');
+require_once('PHPExcel/Writer/Excel2007.php');
+require_once('PHPExcel/Writer/Excel5.php');
+
+require_once('utf8.utils.php');
+require_once('ConsultaSQL.php');
+require_once('ConsultaSQLService.php');
+require_once('Pestanya.php');
+require_once('PestanyaService.php');
+require_once('InformeXLS.php');
+require_once('InformeXLSService.php');
+require_once('Prueba.php');
+require_once('PruebaService.php');
 
 $br = "<br/>";
 
@@ -24,58 +34,37 @@ $objPHPExcel = new PHPExcel();
 
 // Set properties
 echo " Set properties\n".$br;
-$objPHPExcel->getProperties()->setCreator("Maarten Balliauw");
-$objPHPExcel->getProperties()->setLastModifiedBy("Maarten Balliauw");
-$objPHPExcel->getProperties()->setTitle("Office 2007 XLSX Test Document");
-$objPHPExcel->getProperties()->setSubject("Office 2007 XLSX Test Document");
-$objPHPExcel->getProperties()->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.");
+$objPHPExcel->getProperties()->setCreator("jherranzm");
+$objPHPExcel->getProperties()->setLastModifiedBy("jherranzm");
+$objPHPExcel->getProperties()->setTitle("Office 2007 XLSX Document");
+$objPHPExcel->getProperties()->setSubject("Office 2007 XLSX Document");
+$objPHPExcel->getProperties()->setDescription("Document for Office 2007 XLSX, generated using PHP classes.");
 
 
 // Add some data
 echo " Add some data\n".$br;
-$objPHPExcel->setActiveSheetIndex(0);
+$index = 0;
+$service = new ConsultaSQLService();
+$result = $service->listAll();
+$objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "ConsultaSQL");
 
-$consService = new ConsultaSQLService();
-			error_log("Recuperamos todas las consultas ");
-			$result = $consService->listAll();
-			error_log("RESULTADO: ".count($result));
-		
-			//$respuesta = new Respuesta();
-			//$respuesta->codigo = "00";
-			if($result == null){
-				//$respuesta->mensaje = "No se han localizado consultas!";
-		
-			}else{
-				//$respuesta->mensaje = "Recuperadas ".count($result)." consultas!";
-				$col = 0;
-				$fila = 1;
-				foreach($result as $consulta){
-					//$respuesta->listaConsultaSQL[] = convertArrayKeysToUtf8(get_object_vars($consulta));
-					$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($col++, 5 + $fila, $consulta->id);
-					$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($col++, 5 + $fila, $consulta->nombre);
-					$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($col++, 5 + $fila, $consulta->definicion);
-					$fila++;
-					$col++; 
-				}
-		
-			}
+$index++;
+$service = new PestanyaService();
+$result = $service->listAll();
+$objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "Pestanya");
 
-//$objPHPExcel->getActiveSheet()->SetCellValue('A1', 'Hello');
-//$objPHPExcel->getActiveSheet()->SetCellValue('B2', 'world!');
-//$objPHPExcel->getActiveSheet()->SetCellValue('C1', 'Hello');
-//$objPHPExcel->getActiveSheet()->SetCellValue('D2', 'world!');
-//$objPHPExcel->getActiveSheet()->SetCellValue('A3', date("Y-m-d"));
-//$objPHPExcel->getActiveSheet()->SetCellValue('A4', date("H:i:s"));
+$index++;
+$service = new InformeXLSService();
+$result = $service->listAll();
+$objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "InformeXLS");
 
-//$fila = 0;
-//while($fila < 10){
-//	$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(0, 5 + $fila, date("H:i:s"));
-//	$fila++;
-//}
+$index++;
+$service = new PruebaService();
+$result = $service->listAll();
+$objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "Prueba");
 
-// Rename sheet
-echo " Rename sheet\n".$br;
-$objPHPExcel->getActiveSheet()->setTitle('Simple');
+
+
 
 $ruta = "/downloads/";
 $file = "excel";		
@@ -116,4 +105,85 @@ try{
 
 // Echo done
 echo date('H:i:s') . " Done writing file.\r\n".$br;
+
+
+
+
+function rellenaPestanya( $libroExcel, $index, $listaObjetos, $nombrePestanya){
+	
+			$br = "<br/>";
+	
+			$libroExcel->createSheet($index);
+			$libroExcel->setActiveSheetIndex($index);
+
+			error_log("RESULTADO: ".count($listaObjetos));
+		
+			if($listaObjetos == null){
+		
+			}else{
+				$col = 0;
+				$fila = 1;
+				$pintarCabecera = TRUE;
+				
+				foreach($listaObjetos as $elObjeto){
+						
+					
+					$reflect = new ReflectionClass($elObjeto);
+					$props   = $reflect->getProperties(ReflectionProperty::IS_PUBLIC);
+					
+					$worksheet = $libroExcel->getActiveSheet();
+					if($pintarCabecera){
+						foreach ($props as $prop) {
+    						$worksheet->setCellValueByColumnAndRow(
+    							$col++, 
+    							$fila, 
+    							utf8_encode($prop->getName())
+    							);
+						}//foreach ($props as $prop) {
+						$pintarCabecera = FALSE;
+						
+						$highestColumn = $worksheet->getHighestColumn();
+						$range = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($col-1).'1';
+						
+						$style_header = array(                  
+                			'fill' => array(
+                    			'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                    			'color' => array('rgb'=>'DDDDDD'),
+               					 ),
+                			'font' => array(
+                   				 'bold' => true,
+                			)
+                		);
+						
+						$worksheet->getStyle($range)->applyFromArray( $style_header );
+						
+						$fila++;
+						$col = 0;
+					}//if(!$pintarCabecera){
+							
+					foreach ($props as $prop) {
+						
+    					$worksheet->setCellValueByColumnAndRow(
+    						$col++, 
+    						$fila, 
+    						utf8_encode($reflect->getProperty($prop->getName())->getValue($elObjeto))
+    						);
+					}//foreach ($props as $prop) {
+							
+					$fila++;
+					$col = 0;
+					
+						
+						
+				}//foreach($listaObjetos as $elObjeto){
+		
+			}//if($listaObjetos == null){
+
+
+			// Rename sheet
+			echo " Renombramos la pestaña:".$nombrePestanya."\n".$br;
+			$libroExcel->getActiveSheet()->setTitle($nombrePestanya);
+			
+		return $libroExcel;
+}
 ?>

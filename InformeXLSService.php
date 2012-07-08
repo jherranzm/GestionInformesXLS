@@ -14,7 +14,14 @@ class InformeXLSService{
 	 */
 	public function listAll(){
 
-		$statement = "SELECT id, nombre FROM tbl_informesxls";
+		$statement = "SELECT 
+			i.id as id 
+			, i.nombre as nombre 
+			, count(*) as numPestanyes
+			FROM tbl_informesxls i
+			INNER JOIN tbl_informe_pestanya ip on i.id = ip.informe_id
+			GROUP BY i.nombre
+			";
 		try{
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

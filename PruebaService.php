@@ -1,6 +1,6 @@
 <?php
 
-include_once('Prueba.php');
+require_once('Prueba.php');
 
 class PruebaService{
 

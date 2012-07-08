@@ -1,12 +1,12 @@
 <?php
-class Test{
+class Prueba{
 
 	public $id;
 	public $fecha;
 	public $fecha2;
 	public $textoLargo;
-	public $decimal;
-	public $float;
+	public $valorDecimal;
+	public $valorFloat;
 	
 	
 
@@ -15,8 +15,8 @@ class Test{
 				."Fecha: [".$this->fecha."], "
 				."Fecha2: [".$this->fecha2."], "
 				."textoLargo: [".$this->textoLargo."], "
-				."decimal: [".$this->decimal."], "
-				."float: [".$this->float."], "
+				."valorDecimal: [".$this->valorDecimal."], "
+				."valorFloat: [".$this->valorFloat."], "
 				."\n"."<br/>";
 	}
 }
