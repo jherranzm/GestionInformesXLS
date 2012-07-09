@@ -24,6 +24,9 @@ require_once('InformeXLSService.php');
 require_once('Prueba.php');
 require_once('PruebaService.php');
 
+header('Content-Type: text/html; charset=utf-8');
+
+
 $br = "<br/>";
 
 echo "include_path: [".ini_get('include_path')."]\n".$br;
@@ -139,6 +142,8 @@ function rellenaPestanya( $libroExcel, $index, $listaObjetos, $nombrePestanya){
     							$fila, 
     							utf8_encode($prop->getName())
     							);
+							//echo " :".$prop->getName().":".gettype($reflect->getProperty($prop->getName()))."\n".$br;
+							
 						}//foreach ($props as $prop) {
 						$pintarCabecera = FALSE;
 						
