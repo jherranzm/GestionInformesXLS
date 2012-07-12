@@ -43,6 +43,9 @@ $objPHPExcel->getProperties()->setTitle("Office 2007 XLSX Document");
 $objPHPExcel->getProperties()->setSubject("Office 2007 XLSX Document");
 $objPHPExcel->getProperties()->setDescription("Document for Office 2007 XLSX, generated using PHP classes.");
 
+$objPHPExcel->getDefaultStyle()->getFont()->setName('Arial');
+$objPHPExcel->getDefaultStyle()->getFont()->setSize(8);
+
 
 // Add some data
 echo " Add some data\n".$br;
@@ -65,6 +68,17 @@ $index++;
 $service = new PruebaService();
 $result = $service->listAll();
 $objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "Prueba");
+
+
+$texto = "Esto será un texto con 400...";
+$num1 = rand(1,3999);
+$num2 = 100*(1/rand(0,1971));
+$num = $service->addNewTest($texto, $num1, $num2);
+echo $num."\n".$br;
+
+$prueba = $service->findById($num);
+
+echo json_encode($prueba)."\n".$br;
 
 
 
@@ -112,78 +126,90 @@ echo date('H:i:s') . " Done writing file.\r\n".$br;
 
 
 
-function rellenaPestanya( $libroExcel, $index, $listaObjetos, $nombrePestanya){
+function rellenaPestanya( 
+    $libroExcel, 
+    $index, 
+    $listaObjetos, 
+    $nombrePestanya){
 	
 			$br = "<br/>";
+            $ultimaColumna = -1;
 	
 			$libroExcel->createSheet($index);
 			$libroExcel->setActiveSheetIndex($index);
 
 			error_log("RESULTADO: ".count($listaObjetos));
 		
-			if($listaObjetos == null){
-		
-			}else{
-				$col = 0;
-				$fila = 1;
-				$pintarCabecera = TRUE;
+			if($listaObjetos == null) return $libroExcel;
+            
+			$col = 0;
+			$fila = 1;
+			$pintarCabecera = TRUE;
+			
+			foreach($listaObjetos as $elObjeto){
+					
 				
-				foreach($listaObjetos as $elObjeto){
-						
-					
-					$reflect = new ReflectionClass($elObjeto);
-					$props   = $reflect->getProperties(ReflectionProperty::IS_PUBLIC);
-					
-					$worksheet = $libroExcel->getActiveSheet();
-					if($pintarCabecera){
-						foreach ($props as $prop) {
-    						$worksheet->setCellValueByColumnAndRow(
-    							$col++, 
-    							$fila, 
-    							utf8_encode($prop->getName())
-    							);
-							//echo " :".$prop->getName().":".gettype($reflect->getProperty($prop->getName()))."\n".$br;
-							
-						}//foreach ($props as $prop) {
-						$pintarCabecera = FALSE;
-						
-						$highestColumn = $worksheet->getHighestColumn();
-						$range = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($col-1).'1';
-						
-						$style_header = array(                  
-                			'fill' => array(
-                    			'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                    			'color' => array('rgb'=>'DDDDDD'),
-               					 ),
-                			'font' => array(
-                   				 'bold' => true,
-                			)
-                		);
-						
-						$worksheet->getStyle($range)->applyFromArray( $style_header );
-						
-						$fila++;
-						$col = 0;
-					}//if(!$pintarCabecera){
-							
+				$reflect = new ReflectionClass($elObjeto);
+				$props   = $reflect->getProperties(ReflectionProperty::IS_PUBLIC);
+				
+				$worksheet = $libroExcel->getActiveSheet();
+				if($pintarCabecera){
 					foreach ($props as $prop) {
+						$worksheet->setCellValueByColumnAndRow(
+							$col++, 
+							$fila, 
+							utf8_encode($prop->getName())
+							);
+						//echo " :".$prop->getName().":".gettype($reflect->getProperty($prop->getName()))."\n".$br;
 						
-    					$worksheet->setCellValueByColumnAndRow(
-    						$col++, 
-    						$fila, 
-    						utf8_encode($reflect->getProperty($prop->getName())->getValue($elObjeto))
-    						);
 					}//foreach ($props as $prop) {
-							
+					$pintarCabecera = FALSE;
+					
+					$highestColumn = $worksheet->getHighestColumn();
+                    $ultimaColumna = $col -1;
+					$range = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($ultimaColumna).'1';
+					
+					$style_header = array(                  
+            			'fill' => array(
+                			'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                			'color' => array('rgb'=>'DDDDDD'),
+           					 ),
+            			'font' => array(
+               				 'bold' => true,
+            			)
+            		);
+					
+					$worksheet->getStyle($range)->applyFromArray( $style_header );
+					
 					$fila++;
 					$col = 0;
+				}//if(!$pintarCabecera){
+						
+				foreach ($props as $prop) {
 					
+					$worksheet->setCellValueByColumnAndRow(
+						$col++, 
+						$fila, 
+						utf8_encode($reflect->getProperty($prop->getName())->getValue($elObjeto))
+						);
+				}//foreach ($props as $prop) {
 						
-						
-				}//foreach($listaObjetos as $elObjeto){
-		
-			}//if($listaObjetos == null){
+				$fila++;
+				$col = 0;
+				
+					
+					
+			}//foreach($listaObjetos as $elObjeto){
+			// echo $fila."\n".$br;
+            // echo "RESULTADO: ".count($listaObjetos)."\n".$br;
+            $rango = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($ultimaColumna).(count($listaObjetos)+1);
+            echo "RANGO: ".$rango."\n".$br;
+            // $libroExcel->getActiveSheet()->setAutoFilter($rango );
+            $libroExcel->getActiveSheet()->setAutoFilter( 'A1:' . $libroExcel->getActiveSheet()->getHighestColumn() . $libroExcel->getActiveSheet()->getHighestRow());
+            
+            echo "".'A1:' . $libroExcel->getActiveSheet()->getHighestColumn() . $libroExcel->getActiveSheet()->getHighestRow()."\n"."<br/>";
 
+            $libroExcel->addNamedRange( new PHPExcel_NamedRange($nombrePestanya, $libroExcel->getActiveSheet(), $rango) );
 
 			// Rename sheet
 			echo " Renombramos la pestaña:".$nombrePestanya."\n".$br;
