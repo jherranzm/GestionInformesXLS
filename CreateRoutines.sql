@@ -66,5 +66,11 @@ VALUES( idInforme, idPestanya, o);
 
 END$$
 
+delimiter $$
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_pestanyes_byinforme` AS select `i`.`ID` AS `idInforme`,`p`.`ID` AS `id`,`ip`.`orden` AS `ordenPestanya`,`p`.`NOMBRE` AS `nombre`,`p`.`RANGO` AS `rango`,`p`.`numFilaInicial` AS `numfilainicial`,`p`.`CONSULTA_ID` AS `consultaid` from ((`tbl_pestanyes` `p` left join `tbl_informe_pestanya` `ip` on((`ip`.`pestanya_id` = `p`.`ID`))) left join `tbl_informesxls` `i` on((`ip`.`informe_id` = `i`.`ID`))) order by `ip`.`orden`$$
+
+
+
 
 
