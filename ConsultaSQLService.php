@@ -17,6 +17,7 @@ class ConsultaSQLService{
 		try{
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
 			$query = $conn->prepare($statement);
 			if(!$query) return false;
 			
@@ -42,29 +43,38 @@ class ConsultaSQLService{
 
 
 		$statement = 'INSERT INTO tbl_consultasSQL (Nombre, Definicion) VALUES (:name, :sql)';
+        $id = -1;
 		try {
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
 
 			# Prepare the query ONCE
 			$stmt = $conn->prepare($statement);
-			$stmt->bindParam(':name', utf8_decode($_nombre));
-			$stmt->bindParam(':sql', utf8_decode($_consultaSQL));
 
-			$_nombre = $consulta->nombre;
-			$_consultaSQL = $consulta->definicion;
+            $_nombre = utf8_decode($consulta->nombre);
+            $_definicion = utf8_decode($consulta->definicion);
+            
+            $stmt->bindParam(':name', $_nombre);
+            $stmt->bindParam(':sql', $_definicion);
 
-			//     # First insertion
-			$stmt->execute();
+            if(!$stmt->execute()) return false ;
+            $id = $conn->lastInsertId();
+            
+            $conn = null;
 			
 
 		} catch(PDOException $e) {
 			echo 'ERROR: ' . $e->getMessage();
 		}
+        return $id;
 	}
 
 	/**
-	 *
+     * 
+	 * Retorna true o false en funcion de si ha podido o no
+     * modificar la ConsultaSQL
+     * 
 	 * @param ConsultaSQL $consulta
 	 */
 	public function update( ConsultaSQL $consulta ){
@@ -73,28 +83,33 @@ class ConsultaSQLService{
 		try {
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
 	
 			# Prepare the query ONCE
 			$stmt = $conn->prepare('UPDATE tbl_consultasSQL SET Nombre = :name, Definicion =  :sql WHERE id = :id');
-			$stmt->bindParam(':name', utf8_decode($_nombre));
-			$stmt->bindParam(':sql', utf8_decode($_consultaSQL));
-			$stmt->bindParam(':id', $_id);
 			
-	
-			$_nombre = $consulta->nombre;
-			$_consultaSQL = $consulta->definicion;
-			$_id = $consulta->id;
-	
-			//     # First insertion
-			$stmt->execute();
+            $_nombre = utf8_decode($consulta->nombre);
+            $_definicion = utf8_decode($consulta->definicion);
+            
+            $stmt->bindParam(':name', $_nombre);
+            $stmt->bindParam(':sql', $_definicion);
+            $stmt->bindParam(':id', $consulta->id);
+            
+			if(!$stmt->execute() ) return false;
+            
+            return true;
 	
 		} catch(PDOException $e) {
 			echo 'ERROR: ' . $e->getMessage();
+            return false;
 		}
+        return false;
 	}
 	
 	/**
 	 *
+     *  Retorna un objeto ConsultaSQL
+     * 
 	 * @param int $idConsulta
 	  */
 	  public function getById( $idConsulta ){
@@ -103,6 +118,8 @@ class ConsultaSQLService{
 		try {
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
+            
 			$query = $conn->prepare($statement);
 			if(!$query) return false;
 			$query->setFetchMode(PDO::FETCH_CLASS, 'ConsultaSQL');
@@ -120,6 +137,7 @@ class ConsultaSQLService{
 	
 	/**
 	 *
+     * Retorna true o false dependiendo de si ha podido o no borrar la consulta
 	 * @param int $idConsulta
 	 */
 	public function delete( $idConsulta ){
@@ -130,6 +148,8 @@ class ConsultaSQLService{
 		try {
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
+            
 			$query = $conn->prepare($statement);
 			if(!$query) return false;
 			if (!$query->execute(array(':id' => $idConsulta))) return false;
@@ -212,15 +232,14 @@ class ConsultaSQLService{
 		try {
 			$conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
 			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
+            
 			$query = $conn->prepare($statement);
 			if(!$query) return false;
 			$query->setFetchMode(PDO::FETCH_CLASS, 'ConsultaSQL');
 			if (!$query->execute(array(':nombre' => "%".$nombre."%"))) return false;
 
 			$result = $query->fetchAll(PDO::FETCH_CLASS, 'ConsultaSQL');
-// 			while($cons = $query->fetch()) {
-// 					echo $cons->toString();
-// 			}
 			
 			$conn = null;
 				

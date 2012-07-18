@@ -35,15 +35,6 @@ class PestanyaService{
 			
 			$result = $query->fetchAll(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, 'pestanya');
 				
-// 			$result = $conn->query($statement);
-
-// 			# Map results to object
-// 			$result->setFetchMode(PDO::FETCH_CLASS, 'Pestanya');
-
-// 			while($pestanya = $result->fetch()) {
-// 				echo $pestanya->toString();
-// 			}
-
 		} catch(PDOException $e) {
 			echo 'ERROR: ' . $e->getMessage();
 		}
@@ -78,10 +69,6 @@ class PestanyaService{
 	
 			$result = $query->fetchAll(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, 'pestanya');
 			
-// 			foreach($result as $pestanya){
-// 				error_log("Pestanya:".$pestanya->toString());
-// 			}
-				
 			$conn = null;
 	
 	
@@ -168,6 +155,34 @@ class PestanyaService{
 	
 		return false;
 	}
+
+    /**
+     *
+     * @param int $idConsulta
+     */
+    public function delete( $idPestanya ){
+    
+        $statement = 'DELETE FROM tbl_Pestanyes WHERE Id = :id';
+        error_log("Borrando la pestanya:".$idPestanya);
+        
+        try {
+            $conn = new PDO('mysql:host=localhost;dbname=977r', $this->username, $this->password);
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES 'utf8'");
+            
+            $query = $conn->prepare($statement);
+            if(!$query) return false;
+            if (!$query->execute(array(':id' => $idPestanya))) return false;
+            error_log("Pestaña ".$idPestanya." borrada!");
+            return true;
+    
+        } catch(PDOException $e) {
+            echo 'ERROR: ' . $e->getMessage();
+        }
+    
+        return false;
+    }
+
 	
 }
 ?>

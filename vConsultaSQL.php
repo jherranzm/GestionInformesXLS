@@ -103,7 +103,7 @@ header('Content-Type: text/html; charset=utf-8');
 				<form id="formUpdateConsultaSQL" method="post" action="#">
 	
 					<label for="uNombre">Nombre</label> 
-					<input type="text" id="uNombre" name="nombre"  class="ui-widget ui-widget-content"/> <br /> 
+					<input type="text" id="uNombre" name="nombre"  size="100" class="ui-widget ui-widget-content"/> <br /> 
 					
 					<label for="uConsultaSQL">SQL</label> <br />
 					<textarea id="uConsultaSQL" name="consultaSQL" 

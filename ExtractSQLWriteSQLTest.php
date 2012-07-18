@@ -54,15 +54,21 @@ $service = new ConsultaSQLService();
 $result = $service->listAll();
 $objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "ConsultaSQL");
 
+mongoSave($result, "ConsultasSQL");
+
 $index++;
 $service = new PestanyaService();
 $result = $service->listAll();
 $objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "Pestanya");
 
+mongoSave($result, "Pestanyes");
+
 $index++;
 $service = new InformeXLSService();
 $result = $service->listAll();
 $objPHPExcel = rellenaPestanya($objPHPExcel, $index, $result, "InformeXLS");
+
+mongoSave($result, "InformesXLS");
 
 $index++;
 $service = new PruebaService();
@@ -78,7 +84,7 @@ echo $num."\n".$br;
 
 $prueba = $service->findById($num);
 
-echo json_encode($prueba)."\n".$br;
+echo "".json_encode($prueba)."\n".$br;
 
 
 
@@ -104,6 +110,7 @@ try{
 	echo 'ERROR: ' . $e->getMessage().$br;
 }
 
+echo "".json_encode($prueba)."\n".$br;
 
 try{
 
@@ -120,8 +127,38 @@ try{
 	echo 'ERROR: ' . $e->getMessage().$br;
 }
 
+echo "".json_encode($prueba)."\n".$br;
+
+try{
+    // Connect:
+    echo "Connect:"."\n".$br;
+    $connection = new Mongo("localhost");
+    // Select database:
+    echo "DB:"."\n".$br;
+    $db = $connection->objetos;
+    
+    $collection = $db->selectCollection("Pruebas");
+    
+    echo "Insert:"."\n".$br;
+    echo "".json_encode($prueba)."\n".$br;
+    $collection->insert(json_decode(json_encode($prueba)));
+    //echo "".$prueba."\n".$br;
+    
+    echo "Recuperamos:"."\n".$br;
+    $retrieved = $collection->find();
+    echo count($retrieved)."\n".$br;
+        foreach ($retrieved as $obj) {
+          print_r($obj)."\n".$br;
+            echo ""."\n".$br;
+        }
+} catch(Exception $e){
+    echo 'ERROR: ' . $e->getMessage().$br;
+}
+
 // Echo done
 echo date('H:i:s') . " Done writing file.\r\n".$br;
+
+
 
 
 
@@ -217,4 +254,43 @@ function rellenaPestanya(
 			
 		return $libroExcel;
 }
+
+
+function mongoSave($listaObjetos, $collectionName){
+               
+    $br = "<br/>";
+    try{
+        // Connect:
+        // echo "Connect:"."\n".$br;
+        $connection = new Mongo("localhost");
+        // Select database:
+        // echo "DB:"."\n".$br;
+        $db = $connection->objetos;
+        
+        // echo "Collection:"."\n".$br;
+        $collection = $db->selectCollection($collectionName);
+        
+            foreach($listaObjetos as $elObjeto){
+                    
+                $_id = $elObjeto->id;
+                $_obj = $collection->findOne( array ( "id" => $_id));
+                if(!$_obj){ //existe..
+                    echo "Insert:".json_encode($elObjeto)."\n".$br;
+                    $collection->insert(json_decode(json_encode($elObjeto)));
+                } //if
+            } // foreach
+        
+        echo "Recuperamos:"."\n".$br;
+        $retrieved = $collection->find();
+        echo count($retrieved)."\n".$br;
+        // foreach ($retrieved as $obj) {
+              // print_r($obj)."\n".$br;
+              // echo ""."\n".$br;
+        // } // foreach
+        
+    } catch(Exception $e){
+        echo 'ERROR: ' . $e->getMessage().$br;
+    } // try
+}
+
 ?>

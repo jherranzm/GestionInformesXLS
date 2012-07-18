@@ -77,10 +77,10 @@ header('Content-Type: text/html; charset=utf-8');
 				<form id="formPestanya" method="post" action="#">
 	
 					<label for="nombre">Nombre</label> 
-					<input type="text" id="nombre" name="nombre"  class="ui-widget ui-widget-content"/> <br /> 
+					<input type="text" id="nombre" name="nombre" size="100" class="ui-widget ui-widget-content"/> <br /> 
 					
 					<label for="rango">Rango</label> 
-					<input type="text" id="rango" name="rango"  class="ui-widget ui-widget-content"/> <br /> 
+					<input type="text" id="rango" name="rango" size="100" class="ui-widget ui-widget-content"/> <br /> 
 					
 					<label for="numFilaInicial">Fila Inicial</label> 
 					<select id="numFilaInicial" name="numFilaInicial" class="ui-widget ui-widget-content">

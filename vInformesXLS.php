@@ -79,7 +79,7 @@ header('Content-Type: text/html; charset=utf-8');
 				<form id="formInformeXLS" method="post" action="#">
 	
 					<label for="nombre">Nombre</label> 
-					<input type="text" id="nombre" name="nombre" class="ui-widget ui-widget-content"/> <br /> 
+					<input type="text" id="nombre" name="nombre" size="100" class="ui-widget ui-widget-content"/> <br /> 
 										
 					<div id="left" class="grid_5 ui-corner-all alpha">
 						<p>Pestañas Disponibles</p><br>
