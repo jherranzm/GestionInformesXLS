@@ -1,0 +1,25 @@
+B1;TIPO DE FACTURACIÓN;40;A;123;
+B2;CIF SUPRACLIENTE;18;A;163;
+B3;NOMBRE SUPRACLIENTE;70;A;181;
+B4;IDENTIFICACION TIPO ACUERDO;30;A;251;
+B5;NUM AGF MONOSERVICIO;20;A;281;
+B6;DUPLICADO/REGULAR;5;A;301;
+B7;FECHA DE EMISION;8;N;306;
+B8;NOMBRE ENTID EMISORA;70;A;314;
+C1;TIPO DE SOPORTE;2;A;384;
+C2;RECEPTOR DEL SOPORTE;65;A;386;
+C3;DOMICILIO;40;A;451;
+C4;LOCALIDAD;40;A;491;
+C5;CODIGO POSTAL;7;N;531;
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼C6;PROVINCIA;40;A;538;
+D1;NOMBRE ARCHIVO PC;12;A;578;Nombre del archive que ve el cliente con la información de su facturación.
+D2;TIPO DE MONEDA;5;A;590;Moneda que se informa en el archivo.
+D3;TIPO DE CAMBIO;3,4;N;595;Tipo de cambio vigente para conversión a Euros.
+D4;FECHA VERSION;8;N;602;Fecha de la versión de estructura del formato 977 sobre la que se ha realizado este detalle.
+D5;VERSIÓN DE 977;5;A;610;(Codificado) Versión de estructura del formato 977 sobre la que se ha realizado este detalle.
+E1;1aLINEA DE ETIQUETA;56;A;615;Se informa a continuación***
+E2;2aLINEA DE ETIQUETA;30;A;671;Se informa a continuación****
+E3;IDENTIFICADOR UNICO;8;A;701;Código interno de identificación de factura, de soporte y modo de envío.
+E4;NUM REGISTROS TOTALES;8;N;709;Num de registros totales.
+E5;TIPO DE IMPUESTO;1;N;717;Tipo de impuesto de las facturas que componen el archivo Sólo vendrá informado en el caso de que todas las facturas tengan el mismo tipo.
+E6;LONGITUD ARCHIVO;10;N;718;Longitud en bytes del archivo asociado a esta etiqueta incluyendo el propio registro de etiqueta
