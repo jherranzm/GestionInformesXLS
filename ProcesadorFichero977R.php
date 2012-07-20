@@ -6,6 +6,8 @@ define(DIRECTORY_SEPARATOR, '/');
 
 class ProcesadorFichero977R{
     
+    private static $DEBUG = FALSE;
+    
     private $ficheroZip;
     private $zip;
 
@@ -15,6 +17,7 @@ class ProcesadorFichero977R{
     private $claves00;
     private $estructuras;
     public $datosAdministrativos;
+    public $registros;
     
     /**
      * 
@@ -31,6 +34,7 @@ class ProcesadorFichero977R{
         $this->claves00 = $this->loadClaves000000();
         $this->estructuras = array();
         $this->datosAdministrativos = array();
+        $this->registros = array();
     }
     
     
@@ -62,6 +66,8 @@ class ProcesadorFichero977R{
                 $this->estructuras = $this->getEstructura($lineas);
     
                 $this->procesaFichero977R($lineas);
+                
+                unset($lineas);
                 
                 zip_entry_close($resource);
             }
@@ -164,20 +170,20 @@ class ProcesadorFichero977R{
      * 
      */
     function saveUnzippedFile($resource, $completeName){
-        if(touch($completeName)){
-            $ficheroDescomprimido = fopen($completeName, 'w+');
-            $numBytes = fwrite($ficheroDescomprimido, zip_entry_read($resource, zip_entry_filesize($resource)));
-            fclose($ficheroDescomprimido); 
-            if( $numBytes != 1){
-                echo "Se han escrito ".$numBytes." bytes!".PHP_EOL;
-                return true;
-            }else{
-                return false;
-            }
-            
-        }else{
-            return false;
+        if(!touch($completeName)){
+             return FALSE;
         }//if
+        if( ($ficheroDescomprimido = fopen($completeName, 'w+')) === FALSE){
+             return FALSE;
+        }
+        $numBytes = fwrite($ficheroDescomprimido, zip_entry_read($resource, zip_entry_filesize($resource)));
+        fclose($ficheroDescomprimido); 
+        
+        if($numBytes == 0){
+            return FALSE;
+        }
+        echo "Se han escrito ".$numBytes." bytes!".PHP_EOL;
+        return true;
     }
     
     /**
@@ -236,6 +242,11 @@ class ProcesadorFichero977R{
             $str .= $_txt.";";
             $this->datosAdministrativos[$value->campo] = $_txt;
         }
+        // echo $str.PHP_EOL;
+        $str = ""
+            .$this->datosAdministrativos["NOMBRE ARCHIVO PC"].";"
+            .$this->datosAdministrativos["FECHA DE EMISION"].";"
+            .$str;
         echo $str.PHP_EOL;
         
     }
@@ -250,25 +261,24 @@ class ProcesadorFichero977R{
             $str .= substr($linea, $value->posicion - 1, $value->longitud).";";
             $longitudRegistro = (int) substr($linea, $value->posicion - 1, $value->longitud);
         }
-        echo $str.PHP_EOL;
+        if (self::$DEBUG) echo $str.PHP_EOL;
         
         $str = "";
         $pos = 0;
-        echo "Longitud Registro: ".$longitudRegistro.PHP_EOL;
+        if (self::$DEBUG) echo "Longitud Registro: ".$longitudRegistro.PHP_EOL;
         $repeticiones = (int) substr($linea, $this->claves901000[0]->posicion - 1, $this->claves901000[0]->longitud);
-        echo "Repeticiones: ".$repeticiones.PHP_EOL;
+        if (self::$DEBUG) echo "Repeticiones: ".$repeticiones.PHP_EOL;
         $numPos = (int) substr($linea, $this->claves901000[1]->posicion - 1, $this->claves901000[1]->longitud);
-        echo "Numero Posiciones: ".$numPos.PHP_EOL;
+        if (self::$DEBUG) echo "Numero Posiciones: ".$numPos.PHP_EOL;
         
         $this->claves901000[5]->longitud = $numPos;
         
         $pos = $this->claves901000[1]->posicion + $this->claves901000[1]->longitud - 1;
-        echo "Posición: ".$pos.PHP_EOL;
+        if (self::$DEBUG) echo "Posición: ".$pos.PHP_EOL;
         
         for($index = 0; $index < $repeticiones; $index++){
-            echo "".PHP_EOL;
+            if (self::$DEBUG) echo "".PHP_EOL;
             for ($k = 2; $k < 6 ; $k++) {
-                // //echo "".$value->longitud."\t".$value->posicion.PHP_EOL;
                 $_long = $this->claves901000[$k]->longitud;
                 $posF = $pos + $_long;
                 if($longitudRegistro < $posF){ // Nos pasamos...
@@ -277,13 +287,10 @@ class ProcesadorFichero977R{
                 $_txt = utf8_encode(trim(substr($linea, $pos, $_long)));
                 $str .= $_txt.";";
                 $pos += $_long;
-                echo $this->claves901000[$k]->campo."\t#".$_txt."#".PHP_EOL;
+                if (self::$DEBUG) echo $this->claves901000[$k]->campo."\t#".$_txt."#".PHP_EOL;
             }
-            //echo "Posición: ".$pos.PHP_EOL;
             
         }
-        //echo $str.PHP_EOL;
-        
         
     }
 
@@ -309,21 +316,21 @@ class ProcesadorFichero977R{
             $str .= substr($linea, $value->posicion - 1, $value->longitud).";";
             $longitudRegistro = (int) substr($linea, $value->posicion - 1, $value->longitud);
         }
-        echo $str.PHP_EOL;
+        if (self::$DEBUG) echo $str.PHP_EOL;
         
         $str = "";
         $pos = 0;
         
-        echo "Longitud Registro: ".$longitudRegistro.PHP_EOL;
+        if (self::$DEBUG) echo "Longitud Registro: ".$longitudRegistro.PHP_EOL;
         
         $codigoRegistro = substr($linea, $this->claves903000[0]->posicion - 1, $this->claves903000[0]->longitud);
-        echo "Codigo Registro: ".$codigoRegistro.PHP_EOL;
+        if (self::$DEBUG) echo "Codigo Registro: ".$codigoRegistro.PHP_EOL;
         
         $numeroBloques = (int) substr($linea, $this->claves903000[1]->posicion - 1, $this->claves903000[1]->longitud);
-        echo "Número de Bloques: ".$numeroBloques.PHP_EOL;
+        if (self::$DEBUG) echo "Número de Bloques: ".$numeroBloques.PHP_EOL;
         
         $numeroCampos = (int) substr($linea, $this->claves903000[2]->posicion - 1, $this->claves903000[2]->longitud);
-        echo "Número de Campos: ".$numeroCampos.PHP_EOL;
+        if (self::$DEBUG) echo "Número de Campos: ".$numeroCampos.PHP_EOL;
         
         $pos = $this->claves903000[2]->posicion + $this->claves903000[2]->longitud - 1;
         
@@ -335,22 +342,22 @@ class ProcesadorFichero977R{
             $numeroBloquePadre = (int) substr($linea, $pos, $this->claves903000[4]->longitud);
             $pos += (int) $this->claves903000[4]->longitud;
             
-            echo PHP_EOL.PHP_EOL;
-            echo "Numero de Bloque:".$numeroBloque.PHP_EOL;
-            echo "Numero de Bloque Padre:".$numeroBloquePadre.PHP_EOL;
+            if (self::$DEBUG) echo PHP_EOL.PHP_EOL;
+            if (self::$DEBUG) echo "Numero de Bloque:".$numeroBloque.PHP_EOL;
+            if (self::$DEBUG) echo "Numero de Bloque Padre:".$numeroBloquePadre.PHP_EOL;
             
             for($kc = 0; $kc < $numeroCampos; $kc++){
                     
-                echo PHP_EOL.PHP_EOL;
+                if (self::$DEBUG) echo PHP_EOL.PHP_EOL;
                 $d = ""; $t = ""; $f = ""; $p = 0; $l = 0; $r = 0; $ta = "";
                 for($i = 5; $i < 12; $i++){
                     $_txt = substr($linea, $pos, $this->claves903000[$i]->longitud);
                     $pos += (int) $this->claves903000[$i]->longitud;
                     
                     if($this->claves903000[$i]->formato == "N"){
-                        echo $pos.":".$longitudRegistro."\t\t".$this->claves903000[$i]->campo." : ".(int)$_txt.PHP_EOL;
+                        if (self::$DEBUG) echo $pos.":".$longitudRegistro."\t\t".$this->claves903000[$i]->campo." : ".(int)$_txt.PHP_EOL;
                     }else{
-                        echo $pos.":".$longitudRegistro."\t\t".$this->claves903000[$i]->campo." : ".trim($_txt).PHP_EOL;
+                        if (self::$DEBUG) echo $pos.":".$longitudRegistro."\t\t".$this->claves903000[$i]->campo." : ".trim($_txt).PHP_EOL;
                     } //if
                     
                     switch ($i) {
@@ -404,10 +411,16 @@ class ProcesadorFichero977R{
         $repeticionesBloque2 = 0;
         $longitudRegistro = 0;
         
+        $registro = array();
+        
         // Recorremos el primer bloque. Este NO se repite
         $strBloque1 = ""
             .$this->datosAdministrativos["NOMBRE ARCHIVO PC"].";"
             .$this->datosAdministrativos["FECHA DE EMISION"].";";
+        $registro["NOMBRE ARCHIVO PC"]  =  $this->datosAdministrativos["NOMBRE ARCHIVO PC"];
+        $registro["FECHA DE EMISION"]  =  $this->datosAdministrativos["FECHA DE EMISION"];
+        
+         
         foreach ($campos as $key => $campo) {
             if($campo->numeroBloque == 1){
                 $_txt = substr($linea, $pos, $campo->longitud);
@@ -421,37 +434,68 @@ class ProcesadorFichero977R{
                  
                  if( strpos($campo->descripcion, "DURACION") > -1){
                      $_txt = ConversorNumerico::conversorAMinutos($_txt, $campo->longitud);
+                     // $registro[$campo->descripcion]  =  rtrim($_txt);
+                     $registro[$campo->descripcion]  =  (float)$_txt;
                  }else if( strpos($campo->descripcion, "HORA") > -1){
                      $_txt = ConversorNumerico::conversorAHHMMSS($_txt);
-                 }else if($campo->tipo == "I"){ // Numérico
+                     $registro[$campo->descripcion]  =  rtrim($_txt);
+                 }else if($campo->tipo == "I" || $campo->tipo == "N"){ // Numérico
                      $_txt = ConversorNumerico::conversion($_txt, $campo->formato);
+                     $_es_float = strpos($campo->formato, ",");
+                     if($_es_float > 0){
+                         $registro[$campo->descripcion]  =  (float)$_txt;
+                     }else{
+                         $registro[$campo->descripcion]  =  (int)$_txt;
+                     }
+                     
+                 }else{
+                     $registro[$campo->descripcion]  =  rtrim($_txt);
                  }
-                  $strBloque1 .= $_txt.";";
+                 $strBloque1 .= $_txt.";";
+                 
+                 
             }
             
         }
         
         for($k = 0; $k < $repeticionesBloque2; $k++){
-            $strBloque2 = "";
+            // $strBloque2 = "";
              foreach ($campos as $key => $campo) {
                 if($campo->numeroBloque == 2){
                     $_txt = substr($linea, $pos, $campo->longitud);
                      if( strpos($campo->descripcion, "DURACION") > -1){
                         $_txt = ConversorNumerico::conversorAMinutos($_txt, $campo->longitud);
+                         // $registro[$campo->descripcion]  =  rtrim($_txt);
+                         $registro[$campo->descripcion]  =  (float)$_txt;
                      }else if( strpos($campo->descripcion, "HORA") > -1){
                         $_txt = ConversorNumerico::conversorAHHMMSS($_txt);
+                        $registro[$campo->descripcion]  =  rtrim($_txt);
                      }else if($campo->tipo == "I" || $campo->tipo == "N"){ // Numérico
                         $_txt = ConversorNumerico::conversion($_txt, $campo->formato);
-                     }
-                    $strBloque2 .= $_txt.";";
+                        $_es_float = strpos($campo->formato, ",");
+                         if($_es_float > 0){
+                             $registro[$campo->descripcion]  =  (float)$_txt;
+                         }else{
+                             $registro[$campo->descripcion]  =  (int)$_txt;
+                         }
+                     }else{
+                         $registro[$campo->descripcion]  =  rtrim($_txt);
+                     } //if
+                    // $strBloque2 .= $_txt.";";
+                    
                     $pos += $campo->longitud;
-                }
-             }
+                } //if
+             } //foreach
+             
              if($pos > $longitudRegistro){
                  $k = $repeticionesBloque2 + 1;
-             }
-             echo $strBloque1.$strBloque2.PHP_EOL;
-        }
-    }
+             } //if
+             //echo $strBloque1.$strBloque2.PHP_EOL;
+             $this->registros[] = $registro;
+        }//for($k = 0; $k < $repeticionesBloque2; $k++){
+            
+                
+            
+    }// function procesaRegistro($linea, $campos) 
 }
 ?>
