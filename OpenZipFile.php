@@ -21,9 +21,8 @@ $claves903000 = loadClaves903000();
 $claves00 = loadClaves000000();
 $estructuras = array();
 
-
 if(!$zip){
-    echo "ERROR!".PHP_EOL;
+    echo "ERROR! No se ha podido abrir el fichero ".$file.PHP_EOL;
 }else{
     
     // Leemos todos los ficheritos que haya en el Zip, aunque en teoría sólo hay uno...!
@@ -37,53 +36,14 @@ if(!$zip){
 
         if (zip_entry_open($zip, $resource, "r")) {
             
-            if(touch($completeName)){
-                $ficheroDescomprimido = fopen($completeName, 'w+');
-                $numBytes = fwrite($ficheroDescomprimido, zip_entry_read($resource, zip_entry_filesize($resource)));
-                if( $numBytes != 1){
-                    echo "Se han escrito ".$numBytes." bytes!".PHP_EOL;
-                }
-                fclose($ficheroDescomprimido); 
-                
-            }
-            $lineas = file($completeName);
-
-            // Recorre nuestro array de líneas
-            foreach ($lineas as $num_línea => $linea) {
-                // Ños 6 primeros caracteres son el código del registro
-                $codigo = substr($linea, 0, 6);
-                
-                // Tratamos los registros que contienen información relevante...
-                
-                // 901010, tabla de códigos internos
-                if($codigo == "901000"){
-                    procesaLinea901000($linea, $clavesA, $claves901000);
-                
-                // 000000, info administrativa    
-                }else if($codigo == "000000"){
-                    procesaLinea000000($linea, $clavesA, $claves00);
-                
-                // 903000, estructura del resto de registros
-                }else if($codigo == "903000"){
-                    $campos = procesaLinea903000($linea, $clavesA, $claves903000);
-                    $estructuras[$campos[0]->codigoRegistro] = $campos;
-                }
-                
-            } //foreach
+            $ret = saveUnzippedFile($resource, $completeName);
             
-            //print_r($estructuras);
+            $lineas = file($completeName);
+            
+            $estructuras = getEstructura($lineas, $clavesA, $claves00, $claves901000, $claves903000);
 
-            // Ahora tratamos del fichero... los registros que no hemos tratado antes...
-            foreach ($lineas as $num_línea => $linea) {
-                $codigo = substr($linea, 0, 6);
-                
-                if($codigo == "903000"){
-                }else if($codigo == "000000"){
-                }else if($codigo == "901000"){
-                }else if(strlen($codigo) == 6){ //evitamos la última línea del fichero...
-                    procesaRegistro($linea, $estructuras[$codigo]);
-                }
-            }
+            procesaFichero977R($lineas, $estructuras);
+            
             zip_entry_close($resource);
         }
         echo PHP_EOL;
@@ -91,6 +51,8 @@ if(!$zip){
     zip_close($zip);
 }
 
+function init(){
+}
 
 function procesaLinea($linea, $clavesA){
     
@@ -102,21 +64,22 @@ function procesaLinea($linea, $clavesA){
     echo $str.PHP_EOL;
 }
 
+/**
+ * 
+ * @param $linea, la línea a tratar
+ * @param $clavesA, la lista de campos en la zonaA (comunes)
+ * @param $claves00, las claves específicas del registro 00.00.00
+ */
 function procesaLinea000000($linea, $clavesA, $claves00){
     
     $str = "";
-    $longitudRegistro = 0;
 
     foreach ($clavesA as $key => $value) {
-        //echo "".$value->longitud."\t".$value->posicion.PHP_EOL;
         $str .= substr($linea, $value->posicion - 1, $value->longitud).";";
-        $longitudRegistro = (int) substr($linea, $value->posicion - 1, $value->longitud);
     }
     
     foreach ($claves00 as $key => $value) {
-        //echo "".$value->longitud."\t".$value->posicion.PHP_EOL;
         $str .= substr($linea, $value->posicion - 1, $value->longitud).";";
-        $longitudRegistro = (int) substr($linea, $value->posicion - 1, $value->longitud);
     }
     echo $str.PHP_EOL;
     
@@ -256,7 +219,6 @@ function procesaLinea903000($linea, $clavesA, $claves903000){
             }//for
             
             if($d == ""){
-                
             }else if($d == "OCURRENCIAS" && $l == 0){
             }else{
                 $campos[] = new Campo($codigoRegistro, $numeroBloque, $numeroBloquePadre, $d, $t, $f, $p, $l, $r, $ta);
@@ -265,7 +227,7 @@ function procesaLinea903000($linea, $clavesA, $claves903000){
         }//for
     }//for
     
-    print_r($campos);
+    //print_r($campos);
     
     return $campos;
     
@@ -351,6 +313,8 @@ function procesaRegistro($linea, $campos){
     $repeticionesBloque2 = 0;
     $longitudRegistro = 0;
     
+    // Recorremos el primer bloque. Este NO se repite
+    $strBloque1 = "";
     foreach ($campos as $key => $campo) {
         if($campo->numeroBloque == 1){
             $_txt = substr($linea, $pos, $campo->longitud);
@@ -365,28 +329,30 @@ function procesaRegistro($linea, $campos){
              if($campo->tipo == "I"){ // Numérico
                  $_txt = ConversorNumerico::conversion($_txt, $campo->formato);
              }
-             echo "".$_txt.";";
+             $strBloque1 .= $_txt.";";
         }
         
     }
-    //echo "OCURRENCIAS:".$repeticionesBloque2.PHP_EOL;
+    // echo $strBloque1.PHP_EOL;
+    
     for($k = 0; $k < $repeticionesBloque2; $k++){
-        echo "".PHP_EOL;
+        // echo "".PHP_EOL;
+        $strBloque2 = "";
          foreach ($campos as $key => $campo) {
             if($campo->numeroBloque == 2){
                 $_txt = substr($linea, $pos, $campo->longitud);
                  if($campo->tipo == "I" || $campo->tipo == "N"){ // Numérico
                      $_txt = ConversorNumerico::conversion($_txt, $campo->formato);
                  }
-                echo $campo->descripcion.":".$_txt.";";
+                $strBloque2 .= $_txt.";";
                 $pos += $campo->longitud;
             }
          }
          if($pos > $longitudRegistro){
              $k = $repeticionesBloque2 + 1;
          }
+         echo $strBloque1.$strBloque2.PHP_EOL;
     }
-    echo "".PHP_EOL;
 }
 
 function loadClaves000000(){
@@ -421,6 +387,79 @@ function loadClaves000000(){
     return $claves;
 }
 
+/**
+ * 
+ * Guarda el fichero descomprimido.
+ * 
+ * @param, $resource, el elemento a guardar
+ * @param, $completeName, nombre completo (con todo el PATH) del fichero
+ * 
+ * @return true or false
+ * 
+ */
+function saveUnzippedFile($resource, $completeName){
+    if(touch($completeName)){
+        $ficheroDescomprimido = fopen($completeName, 'w+');
+        $numBytes = fwrite($ficheroDescomprimido, zip_entry_read($resource, zip_entry_filesize($resource)));
+        fclose($ficheroDescomprimido); 
+        if( $numBytes != 1){
+            echo "Se han escrito ".$numBytes." bytes!".PHP_EOL;
+            return true;
+        }else{
+            return false;
+        }
+        
+    }else{
+        return false;
+    }
+    
+}
 
+
+function getEstructura($lineas, $clavesA, $claves00, $claves901000, $claves903000){
+    
+    $estructuras = array();
+       // Recorre nuestro array de líneas
+    foreach ($lineas as $num_línea => $linea) {
+        // Los 6 primeros caracteres son el código del registro
+        $codigo = substr($linea, 0, 6);
+        
+        // Tratamos los registros que contienen información relevante...
+        
+        // 901010, tabla de códigos internos
+        if($codigo == "901000"){
+            procesaLinea901000($linea, $clavesA, $claves901000);
+        
+        // 000000, info administrativa    
+        }else if($codigo == "000000"){
+            procesaLinea000000($linea, $clavesA, $claves00);
+        
+        // 903000, estructura del resto de registros
+        }else if($codigo == "903000"){
+            $campos = procesaLinea903000($linea, $clavesA, $claves903000);
+            $estructuras[$campos[0]->codigoRegistro] = $campos;
+        }
+        
+    } //foreach
+    
+    return $estructuras;
+    
+}
+
+
+function procesaFichero977R($lineas, $estructuras){
+    // Ahora tratamos del fichero... los registros que no hemos tratado antes...
+    foreach ($lineas as $num_línea => $linea) {
+        $codigo = substr($linea, 0, 6);
+        
+        if($codigo == "903000"){
+        }else if($codigo == "000000"){
+        }else if($codigo == "901000"){
+        }else if(strlen($codigo) == 6){ //evitamos la última línea del fichero...
+            procesaRegistro($linea, $estructuras[$codigo]);
+        }
+    }
+    
+}
 
 ?>
