@@ -15,7 +15,7 @@ class ProcesadorFichero977R{
     private $claves901000;
     private $claves903000;
     private $claves00;
-    private $estructuras;
+    public $estructuras;
     public $datosAdministrativos;
     public $registros;
     
@@ -64,7 +64,7 @@ class ProcesadorFichero977R{
                 $lineas = file($completeName);
                 
                 $this->estructuras = $this->getEstructura($lineas);
-    
+                
                 $this->procesaFichero977R($lineas);
                 
                 unset($lineas);
@@ -212,7 +212,7 @@ class ProcesadorFichero977R{
             // 903000, estructura del resto de registros
             }else if($codigo == "903000"){
                 $campos = $this->procesaLinea903000($linea);
-                $estructuras[$campos[0]->codigoRegistro] = $campos;
+                $estructuras[$campos["CODIGO_REGISTRO"]->codigoRegistro] = $campos;
             }
             
         } //foreach
@@ -234,18 +234,20 @@ class ProcesadorFichero977R{
         foreach ($this->clavesA as $key => $value) {
             $_txt = trim(substr($linea, $value->posicion - 1, $value->longitud));
             $str .= $_txt.";";
-            $this->datosAdministrativos[$value->campo] = $_txt;
+            $_k = str_replace(" ", "_", trim($value->campo));
+            $this->datosAdministrativos[$_k] = $_txt;
         }
         
         foreach ($this->claves00 as $key => $value) {
             $_txt = trim(substr($linea, $value->posicion - 1, $value->longitud));
             $str .= $_txt.";";
-            $this->datosAdministrativos[$value->campo] = $_txt;
+            $_k = str_replace(" ", "_", trim($value->campo));
+            $this->datosAdministrativos[$_k] = $_txt;
         }
         // echo $str.PHP_EOL;
         $str = ""
-            .$this->datosAdministrativos["NOMBRE ARCHIVO PC"].";"
-            .$this->datosAdministrativos["FECHA DE EMISION"].";"
+            .$this->datosAdministrativos["NOMBRE_ARCHIVO_PC"].";"
+            .$this->datosAdministrativos["FECHA_DE_EMISION"].";"
             .$str;
         echo $str.PHP_EOL;
         
@@ -376,7 +378,7 @@ class ProcesadorFichero977R{
                 if($d == ""){
                 }else if($d == "OCURRENCIAS" && $l == 0){
                 }else{
-                    $campos[] = new Campo($codigoRegistro, $numeroBloque, $numeroBloquePadre, $d, $t, $f, $p, $l, $r, $ta);
+                    $campos[$d] = new Campo($codigoRegistro, $numeroBloque, $numeroBloquePadre, $d, $t, $f, $p, $l, $r, $ta);
                 }
                 
             }//for
@@ -415,10 +417,10 @@ class ProcesadorFichero977R{
         
         // Recorremos el primer bloque. Este NO se repite
         $strBloque1 = ""
-            .$this->datosAdministrativos["NOMBRE ARCHIVO PC"].";"
-            .$this->datosAdministrativos["FECHA DE EMISION"].";";
-        $registro["NOMBRE ARCHIVO PC"]  =  $this->datosAdministrativos["NOMBRE ARCHIVO PC"];
-        $registro["FECHA DE EMISION"]  =  $this->datosAdministrativos["FECHA DE EMISION"];
+            .$this->datosAdministrativos["NOMBRE_ARCHIVO_PC"].";"
+            .$this->datosAdministrativos["FECHA_DE_EMISION"].";";
+        $registro["NOMBRE_ARCHIVO_PC"]  =  $this->datosAdministrativos["NOMBRE_ARCHIVO_PC"];
+        $registro["FECHA_DE_EMISION"]  =  $this->datosAdministrativos["FECHA_DE_EMISION"];
         
          
         foreach ($campos as $key => $campo) {
