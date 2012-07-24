@@ -18,6 +18,8 @@ class ProcesadorFichero977R{
     public $estructuras;
     public $datosAdministrativos;
     public $registros;
+    public $tablasAuxiliares;
+    public $camposTraducidos;
     
     /**
      * 
@@ -35,6 +37,8 @@ class ProcesadorFichero977R{
         $this->estructuras = array();
         $this->datosAdministrativos = array();
         $this->registros = array();
+        $this->tablasAuxiliares = array();
+        $this->camposTraducidos = $this->getCamposTraducidos();
     }
     
     
@@ -64,6 +68,9 @@ class ProcesadorFichero977R{
                 $lineas = file($completeName);
                 
                 $this->estructuras = $this->getEstructura($lineas);
+                
+                print_r($this->camposTraducidos);
+                print_r($this->tablasAuxiliares);
                 
                 $this->procesaFichero977R($lineas);
                 
@@ -157,6 +164,19 @@ class ProcesadorFichero977R{
         $claves[] = new Clave("C237", "CODIGO EXTERNO TABLA AUXILIAR",  3, "A", 0);
         
         return $claves;
+    }
+
+    function getCamposTraducidos(){
+                
+        $tablaAuxiliar = array();
+        $tablaAuxiliar["CODIGO_CONCEPTO"] = "EPI";            
+        $tablaAuxiliar["CONCEPTO_FACTURABLE"] = "TQE";            
+        $tablaAuxiliar["AMBITO_DE_TRAFICO"] = "TLL";            
+        $tablaAuxiliar["TARIFA"] = "TRF";            
+        $tablaAuxiliar["NIVEL_IMPOSITIVO"] = "E-G";         
+        
+        return $tablaAuxiliar;   
+                
     }
     
      /**
@@ -280,6 +300,9 @@ class ProcesadorFichero977R{
         
         for($index = 0; $index < $repeticiones; $index++){
             if (self::$DEBUG) echo "".PHP_EOL;
+            $_tabla = "";
+            $_clave = "";
+            $_reg901010 = array();
             for ($k = 2; $k < 6 ; $k++) {
                 $_long = $this->claves901000[$k]->longitud;
                 $posF = $pos + $_long;
@@ -290,9 +313,16 @@ class ProcesadorFichero977R{
                 $str .= $_txt.";";
                 $pos += $_long;
                 if (self::$DEBUG) echo $this->claves901000[$k]->campo."\t#".$_txt."#".PHP_EOL;
+                if($k == 2) $_tabla = $_txt;
+                if($k == 3) $_clave = $_txt;
+                $_reg901010[$this->claves901000[$k]->campo] = $_txt;
             }
-            
+            $_clave2 = $_tabla.";".$_clave;
+            $this->tablasAuxiliares[$_clave2] = $_reg901010;
         }
+        
+        echo "".$str.PHP_EOL;
+        
         
     }
 
@@ -453,6 +483,25 @@ class ProcesadorFichero977R{
                  }else{
                      $registro[$campo->descripcion]  =  rtrim($_txt);
                  }
+                 
+                 // if($campo->tablaAuxiliar == ""){
+//                         
+                 // }else{
+                    // if(array_key_exists($campo->tablaAuxiliar.";".$registro[$campo->descripcion], $this->tablasAuxiliares)){
+                        // echo "".$campo->descripcion.":".$campo->tablaAuxiliar.":"
+                                // .$registro[$campo->descripcion].":"
+                                // .$this->tablasAuxiliares[$campo->tablaAuxiliar.";".$registro[$campo->descripcion]]["DESCRIPCION"]."!".PHP_EOL;
+                        // $registro["DESC_".$campo->descripcion] = $this->tablasAuxiliares[$campo->tablaAuxiliar.";".$registro[$campo->descripcion]]["DESCRIPCION"];
+                    // }else{
+                        // $registro["DESC_".$campo->descripcion] = "";
+                    // }
+                 // }
+                 
+                if(key_exists($campo->descripcion, $this->camposTraducidos)){
+                    $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar($this->camposTraducidos[$campo->descripcion], $registro, $campo );
+                }
+                 
+                 
                  $strBloque1 .= $_txt.";";
                  
                  
@@ -460,6 +509,10 @@ class ProcesadorFichero977R{
             
         }
         
+        
+        /**
+         * Tratamos el bloque 2, que se repite...
+         */
         for($k = 0; $k < $repeticionesBloque2; $k++){
             // $strBloque2 = "";
              foreach ($campos as $key => $campo) {
@@ -484,9 +537,32 @@ class ProcesadorFichero977R{
                          $registro[$campo->descripcion]  =  rtrim($_txt);
                      } //if
                     // $strBloque2 .= $_txt.";";
+                    // if($campo->tablaAuxiliar == ""){
+                        // // No hay datos adicionales
+                    // }else{
+                        // echo "".$campo->descripcion.":".$campo->tablaAuxiliar.":"
+                            // .$registro[$campo->descripcion]
+                            // .$this->tablasAuxiliares[$campo->tablaAuxiliar.";".$registro[$campo->descripcion]]["DESCRIPCION"]."!".PHP_EOL;
+                    // }
                     
                     $pos += $campo->longitud;
                 } //if
+                
+                if(array_key_exists($campo->descripcion, $this->camposTraducidos)){
+                    $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar($this->camposTraducidos[$campo->descripcion], $registro, $campo );
+                // }else{
+                    // echo "".$campo->descripcion." no tiene tabla auxiliar!".PHP_EOL;
+                }
+                
+                 // if($campo->descripcion == "CONCEPTO_FACTURABLE"){
+                    // $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar("TQE", $registro, $campo );
+                 // }else if($campo->descripcion == "AMBITO_DE_TRAFICO"){
+                    // $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar("TLL", $registro, $campo );
+                 // }else if($campo->descripcion == "TARIFA"){
+                    // $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar("TRF", $registro, $campo );
+                 // }else if($campo->descripcion == "NIVEL_IMPOSITIVO"){
+                    // $registro["DESC_".$campo->descripcion] = $this->getInfoFromTablaAuxiliar("E-G", $registro, $campo );
+                 // }
              } //foreach
              
              if($pos > $longitudRegistro){
@@ -499,5 +575,17 @@ class ProcesadorFichero977R{
                 
             
     }// function procesaRegistro($linea, $campos) 
+    
+    
+    function getInfoFromTablaAuxiliar($codInterno, $_registro, $_campo ){
+        if(array_key_exists($codInterno.";".$_registro[$_campo->descripcion], $this->tablasAuxiliares)){
+            $str = $this->tablasAuxiliares[$codInterno.";".$_registro[$_campo->descripcion]]["DESCRIPCION"];
+        }else{
+            $str = "";
+        }
+        
+        return $str;
+        
+    }
 }
 ?>

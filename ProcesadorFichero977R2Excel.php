@@ -1,7 +1,7 @@
 <?php
 /** Error reporting */
 error_reporting(E_ALL);
-ini_set('memory_limit', '256M');
+ini_set('memory_limit', '1024M');
 
 /** Include path **/
 ini_set('include_path', ini_get('include_path').':/usr/local/pear/share/pear/PHPExcel/');
@@ -41,6 +41,7 @@ class ProcesadorFichero977R2Excel extends ProcesadorFichero977R{
         $objPHPExcel->getProperties()->setDescription("Document for Office 2007 XLSX, generated using PHP classes.");
         
         $objPHPExcel->getDefaultStyle()->getFont()->setName('Arial');
+        $objPHPExcel->getDefaultStyle()->getFont()->setSize(8); 
         
         $objPHPExcel->createSheet($index);
         $objPHPExcel->setActiveSheetIndex($index);
@@ -63,10 +64,7 @@ class ProcesadorFichero977R2Excel extends ProcesadorFichero977R{
         $columnasAEliminar[] = "SECUENCIAL";
         $columnasAEliminar[] = "TABLA_DETALLES";
         $columnasAEliminar[] = "LONGITUD_REGISTRO";
-        
-        $columnasSinTipo = array();
-        $columnasSinTipo[] = "NOMBRE_ARCHIVO_PC";
-        $columnasSinTipo[] = "FECHA_DE_EMISION";
+        $columnasAEliminar[] = "OCURRENCIAS";
         
         // Controlamos las filas de cada pestaña
         $rowNumbers = array();
@@ -93,10 +91,40 @@ class ProcesadorFichero977R2Excel extends ProcesadorFichero977R{
                     if(self::$DEBUG) echo "CODIGO_REGISTRO:".$codigoRegistro."".PHP_EOL;
                     $objPHPExcel->getActiveSheet()->setTitle("R".$codigoRegistro);
                     
+                    $default_border = array(
+                        'style' => PHPExcel_Style_Border::BORDER_THIN,
+                        'color' => array('rgb'=>'1006A3')
+                    );
+                    $style_header = array(
+                        'borders' => array(
+                            'bottom' => $default_border,
+                            'left' => $default_border,
+                            'top' => $default_border,
+                            'right' => $default_border,
+                        ),
+                        'fill' => array(
+                            'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                            'color' => array('rgb'=>'E1E0F7'),
+                        ),
+                        'font' => array(
+                            'bold' => true,
+                        )
+                    );
+                    
                     
                     // Cabeceras...
                     $rowNumbers[$codigoRegistro] = 1;
-                    $objPHPExcel->getActiveSheet()->fromArray(array_keys($registro), NULL, 'A'.$rowNumbers[$codigoRegistro]);
+                    // $objPHPExcel->getActiveSheet()->fromArray(array_keys($registro), NULL, 'A'.$rowNumbers[$codigoRegistro]);
+                    $column = 0;
+                    foreach ($registro as $key => $value) {
+                        
+                        $type = PHPExcel_Cell_DataType::TYPE_STRING;
+                        $_k = str_replace("_", " ", $key);
+                        $objPHPExcel->getActiveSheet()->getCellByColumnAndRow($column, $rowNumbers[$codigoRegistro])->setValueExplicit($_k, $type);;
+                        $objPHPExcel->getActiveSheet()->getStyleByColumnAndRow($column, $rowNumbers[$codigoRegistro])->applyFromArray($style_header);;
+                        $column++;
+                    }
+                    
                     $rowNumbers[$codigoRegistro]++;
                 }
                 $objPHPExcel->setActiveSheetIndex($objPHPExcel->getIndex($objPHPExcel->getSheetByName("R".$codigoRegistro)));
@@ -106,17 +134,15 @@ class ProcesadorFichero977R2Excel extends ProcesadorFichero977R{
                 $column = 0;
                 foreach ($registro as $key => $value) {
                     
-                    // Hay dos campos que no aparecen NOMBRE_ARCHIVO_PC, FECHA_DE_EMISION
-                    
-                    if(!in_array($key, $columnasSinTipo)){
-                        $campo = $campos[$key];    
-                        if(self::$DEBUG) echo "Tipo del Campo ".$campo->descripcion." ".$campo->tipo.PHP_EOL;
-                    } 
                     // // $objPHPExcel->getActiveSheet()->fromArray($registro, NULL, 'A'.$rowNumbers[$codigoRegistro]);
                     
-                    
-                    
-                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($column, $rowNumbers[$codigoRegistro], $value);
+                    if( gettype($value) == "string"){
+                        $type = PHPExcel_Cell_DataType::TYPE_STRING;
+                    }else if( gettype($value) == "double"){
+                        $type = PHPExcel_Cell_DataType::TYPE_NUMERIC;
+                    } 
+                    // $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($column, $rowNumbers[$codigoRegistro], $value);
+                    $objPHPExcel->getActiveSheet()->getCellByColumnAndRow($column, $rowNumbers[$codigoRegistro])->setValueExplicit($value, $type);;
                     $column++;
                 }
                 $rowNumbers[$codigoRegistro]++;
